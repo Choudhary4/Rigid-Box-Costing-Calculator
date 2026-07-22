@@ -3,8 +3,8 @@
 import React from 'react';
 
 interface SummaryRowProps {
-  label: string;
-  value: string | number;
+  label?: string;
+  value?: string | number;
   unit?: string;
   highlight?: boolean;
   indent?: boolean;
