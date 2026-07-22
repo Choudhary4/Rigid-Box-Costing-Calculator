@@ -150,10 +150,10 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
     sheetKey
   );
 
-  const baseSheetsRequired = Math.ceil(quantity / basePiecesPerSheet);
-  const lidSheetsRequired = Math.ceil(quantity / lidPiecesPerSheet);
-  const coverSheetsRequired = Math.ceil(quantity / coverPiecesPerSheet);
-  const astarSheetsRequired = Math.ceil(quantity / astarPiecesPerSheet);
+  const baseSheetsRequired = basePiecesPerSheet > 0 ? Math.ceil(quantity / basePiecesPerSheet) : 0;
+  const lidSheetsRequired = lidPiecesPerSheet > 0 ? Math.ceil(quantity / lidPiecesPerSheet) : 0;
+  const coverSheetsRequired = coverPiecesPerSheet > 0 ? Math.ceil(quantity / coverPiecesPerSheet) : 0;
+  const astarSheetsRequired = astarPiecesPerSheet > 0 ? Math.ceil(quantity / astarPiecesPerSheet) : 0;
 
   const sheetYield: SheetYield = {
     basePiecesPerSheet,
@@ -194,10 +194,15 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
     marginAmount,
     sellingPrice,
     costPerBox: totalManufacturingCost / quantity,
-    sellingPricePerBox: sellingPrice / quantity,
+    sellingPricePerBox: quantity > 0 ? sellingPrice / quantity : 0,
   };
 
-  return { boardCosts, gattaDimensions, coverDimensions, sheetYield, costBreakdown };
+  let error: string | undefined = undefined;
+  if (basePiecesPerSheet === 0 || lidPiecesPerSheet === 0 || coverPiecesPerSheet === 0 || astarPiecesPerSheet === 0) {
+    error = "Box dimensions are too large for the selected sheet size. Please reduce dimensions or select a larger sheet.";
+  }
+
+  return { error, boardCosts, gattaDimensions, coverDimensions, sheetYield, costBreakdown };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

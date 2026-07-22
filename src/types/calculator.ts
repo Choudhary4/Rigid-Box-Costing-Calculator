@@ -78,6 +78,7 @@ export interface CostBreakdown {
 }
 
 export interface CalculationResult {
+  error?: string;
   boardCosts: BoardCosts;
   gattaDimensions: GattaDimensions;
   coverDimensions: CoverDimensions;

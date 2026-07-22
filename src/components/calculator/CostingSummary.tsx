@@ -25,10 +25,16 @@ function fmtINR(n: number) {
 }
 
 export default function CostingSummary({ result, quantity, totalPrintingCost, totalLabourCost, marginOnCost, marginOnSales }: Props) {
-  const { gattaDimensions, coverDimensions, sheetYield, costBreakdown } = result;
+  const { error, gattaDimensions, coverDimensions, sheetYield, costBreakdown } = result;
 
   return (
     <div className="flex flex-col gap-8">
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm font-medium">
+          {error}
+        </div>
+      )}
+      
       {/* Gatta Dimensions */}
       <div>
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide border-b border-slate-200 pb-2 mb-4">
