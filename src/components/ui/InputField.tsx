@@ -21,31 +21,51 @@ export default function InputField({
   min = 0,
   id,
 }: InputFieldProps) {
+  const [localValue, setLocalValue] = React.useState(value.toString());
+
+  React.useEffect(() => {
+    if (parseFloat(localValue) !== value && !(localValue === '' && value === 0)) {
+      setLocalValue(value.toString());
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value;
+    // Remove leading zeros (e.g., "07" -> "7", "00.5" -> "0.5")
+    val = val.replace(/^0+(?=\d)/, '');
+    
+    setLocalValue(val);
+
+    const parsed = parseFloat(val);
+    if (!isNaN(parsed)) {
+      onChange(parsed);
+    } else if (val === '') {
+      onChange(0);
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-xs font-medium text-slate-400 tracking-wide uppercase">
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-slate-700">
         {label}
-        {unit && <span className="ml-1 text-slate-500 normal-case">({unit})</span>}
       </label>
       <div className="relative">
         <input
           id={id}
           type="number"
-          value={value}
+          value={localValue}
           step={step}
           min={min}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          onChange={handleChange}
           className="
-            w-full bg-slate-800/60 border border-slate-700/60 rounded-lg
-            px-3 py-2.5 text-sm text-white
-            focus:outline-none focus:ring-2 focus:ring-violet-500/70 focus:border-violet-500/50
-            hover:border-slate-600 transition-all duration-200
-            [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
-            placeholder:text-slate-600
+            w-full bg-white border border-slate-300 rounded-md
+            px-3 py-2 text-sm text-slate-900 shadow-sm
+            focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500
+            transition-colors
           "
         />
         {unit && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 pointer-events-none">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 pointer-events-none bg-white pl-1">
             {unit}
           </span>
         )}

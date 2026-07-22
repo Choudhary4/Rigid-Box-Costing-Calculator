@@ -17,7 +17,8 @@ export interface BoxInputs {
   totalPrintingCost: number;
   coverPaperCostPerSheet: number;
   astarCostPerSheet: number;
-  marginPercent: number;
+  marginOnCost: number;
+  marginOnSales: number;
 }
 
 export interface BoardType {

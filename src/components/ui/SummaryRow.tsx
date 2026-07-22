@@ -20,30 +20,26 @@ export default function SummaryRow({
   separator = false,
 }: SummaryRowProps) {
   if (separator) {
-    return <div className="my-2 border-t border-slate-700/50" />;
+    return <div className="my-2 border-t border-slate-200" />;
   }
 
   return (
     <div
       className={`
-        flex justify-between items-center py-2 px-3 rounded-lg transition-colors duration-150
-        ${indent ? 'ml-3' : ''}
+        flex justify-between items-center py-2 px-2 rounded transition-colors
+        ${indent ? 'ml-4' : ''}
         ${highlight
-          ? 'bg-violet-500/15 border border-violet-500/30'
-          : 'hover:bg-slate-800/40'
+          ? 'bg-blue-50 border border-blue-100 font-medium'
+          : 'hover:bg-slate-50'
         }
       `}
     >
-      <span
-        className={`text-sm ${highlight ? 'text-violet-200 font-semibold' : 'text-slate-400'} ${indent ? 'text-xs' : ''}`}
-      >
+      <span className={`text-sm ${highlight ? 'text-blue-900' : 'text-slate-600'} ${indent ? 'text-slate-500' : ''}`}>
         {label}
       </span>
-      <span
-        className={`font-mono text-sm font-semibold ${highlight ? 'text-violet-300' : 'text-white'} ${indent ? 'text-xs' : ''}`}
-      >
+      <span className={`text-sm font-mono ${highlight ? 'text-blue-900 font-bold' : 'text-slate-900 font-medium'}`}>
         {value}
-        {unit && <span className="ml-1 text-slate-500 font-normal text-xs">{unit}</span>}
+        {unit && <span className="ml-1 text-slate-500 font-normal">{unit}</span>}
       </span>
     </div>
   );

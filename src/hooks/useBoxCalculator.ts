@@ -42,7 +42,8 @@ const DEFAULT_INPUTS: BoxInputs = {
   totalPrintingCost: 8000,
   coverPaperCostPerSheet: 18,
   astarCostPerSheet: 20,
-  marginPercent: 30,
+  marginOnCost: 30,
+  marginOnSales: 23.08,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,8 +57,8 @@ function roundGatta(value: number): number {
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Pieces per sheet (31x41) for both orientations
 // ─────────────────────────────────────────────────────────────────────────────
-function piecesPerSheet(pieceL: number, pieceW: number): number {
-  const { length: sheetL, width: sheetW } = SHEET_SIZES.large;
+function piecesPerSheet(pieceL: number, pieceW: number, sheetKey: 'large' | 'small'): number {
+  const { length: sheetL, width: sheetW } = SHEET_SIZES[sheetKey];
   const o1 = Math.floor(sheetL / pieceL) * Math.floor(sheetW / pieceW);
   const o2 = Math.floor(sheetL / pieceW) * Math.floor(sheetW / pieceL);
   return Math.max(o1, o2);
@@ -66,7 +67,7 @@ function piecesPerSheet(pieceL: number, pieceW: number): number {
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Calculation
 // ─────────────────────────────────────────────────────────────────────────────
-function calculate(inputs: BoxInputs, board: BoardType): CalculationResult {
+function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'small'): CalculationResult {
   const {
     boxLength,
     boxWidth,
@@ -81,7 +82,7 @@ function calculate(inputs: BoxInputs, board: BoardType): CalculationResult {
     totalPrintingCost,
     coverPaperCostPerSheet,
     astarCostPerSheet,
-    marginPercent,
+    marginOnCost,
   } = inputs;
 
   // ── Step 1: Board Cost ───────────────────────────────────────────────────
@@ -130,19 +131,23 @@ function calculate(inputs: BoxInputs, board: BoardType): CalculationResult {
   // ── Step 4 & 5: Sheet Yield & Quantities ─────────────────────────────────
   const basePiecesPerSheet = piecesPerSheet(
     gattaDimensions.baseLength,
-    gattaDimensions.baseWidth
+    gattaDimensions.baseWidth,
+    sheetKey
   );
   const lidPiecesPerSheet = piecesPerSheet(
     gattaDimensions.lidLength,
-    gattaDimensions.lidWidth
+    gattaDimensions.lidWidth,
+    sheetKey
   );
   const coverPiecesPerSheet = piecesPerSheet(
     coverDimensions.coverLength,
-    coverDimensions.coverWidth
+    coverDimensions.coverWidth,
+    sheetKey
   );
   const astarPiecesPerSheet = piecesPerSheet(
     coverDimensions.astarLength,
-    coverDimensions.astarWidth
+    coverDimensions.astarWidth,
+    sheetKey
   );
 
   const baseSheetsRequired = Math.ceil(quantity / basePiecesPerSheet);
@@ -162,8 +167,10 @@ function calculate(inputs: BoxInputs, board: BoardType): CalculationResult {
   };
 
   // ── Step 6: Final Costing ────────────────────────────────────────────────
-  const gattaBaseCost = baseSheetsRequired * costPerLargeSheet;
-  const gattaLidCost = lidSheetsRequired * costPerLargeSheet;
+  const activeSheetCost = sheetKey === 'large' ? costPerLargeSheet : costPerSmallSheet;
+
+  const gattaBaseCost = baseSheetsRequired * activeSheetCost;
+  const gattaLidCost = lidSheetsRequired * activeSheetCost;
   const coverPaperCost = coverSheetsRequired * coverPaperCostPerSheet;
   const astarCost = astarSheetsRequired * astarCostPerSheet;
 
@@ -175,7 +182,7 @@ function calculate(inputs: BoxInputs, board: BoardType): CalculationResult {
     totalPrintingCost +
     totalLabourCost;
 
-  const marginAmount = totalManufacturingCost * (marginPercent / 100);
+  const marginAmount = totalManufacturingCost * (marginOnCost / 100);
   const sellingPrice = totalManufacturingCost + marginAmount;
 
   const costBreakdown: CostBreakdown = {
@@ -199,6 +206,7 @@ function calculate(inputs: BoxInputs, board: BoardType): CalculationResult {
 export function useBoxCalculator() {
   const [inputs, setInputs] = useState<BoxInputs>(DEFAULT_INPUTS);
   const [selectedBoardId, setSelectedBoardId] = useState<string>('GG');
+  const [selectedSheetKey, setSelectedSheetKey] = useState<'large' | 'small'>('large');
 
   const selectedBoard = useMemo(
     () => BOARD_TYPES.find((b) => b.id === selectedBoardId) ?? BOARD_TYPES[0],
@@ -206,12 +214,26 @@ export function useBoxCalculator() {
   );
 
   const result = useMemo(
-    () => calculate(inputs, selectedBoard),
-    [inputs, selectedBoard]
+    () => calculate(inputs, selectedBoard, selectedSheetKey),
+    [inputs, selectedBoard, selectedSheetKey]
   );
 
   function updateInput<K extends keyof BoxInputs>(key: K, value: BoxInputs[K]) {
-    setInputs((prev) => ({ ...prev, [key]: value }));
+    setInputs((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === 'marginOnCost') {
+        const moc = Number(value) || 0;
+        next.marginOnSales = parseFloat(((moc / (100 + moc)) * 100).toFixed(2));
+      } else if (key === 'marginOnSales') {
+        const mos = Number(value) || 0;
+        if (mos >= 100) {
+          next.marginOnCost = 0; // prevent divide by zero
+        } else {
+          next.marginOnCost = parseFloat(((mos / (100 - mos)) * 100).toFixed(2));
+        }
+      }
+      return next;
+    });
   }
 
   return {
@@ -219,6 +241,8 @@ export function useBoxCalculator() {
     updateInput,
     selectedBoardId,
     setSelectedBoardId,
+    selectedSheetKey,
+    setSelectedSheetKey,
     selectedBoard,
     result,
   };
