@@ -40,39 +40,39 @@ export default function BoxCalculatorPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <div className="max-w-[1600px] mx-auto px-4 py-8 flex flex-col gap-6">
-        <header className="border-b border-slate-200 pb-6 mb-2">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
-                Rigid Box Costing Calculator
-              </h1>
-              <p className="mt-1 text-slate-600 text-sm">
-                Material estimation & pricing for packaging manufacturing
-              </p>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-sm px-4 py-4 md:px-8">
+        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">
+              Rigid Box Costing Calculator
+            </h1>
+            <p className="mt-1 text-slate-600 text-sm">
+              Material estimation & pricing for packaging manufacturing
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="bg-white border border-slate-200 rounded px-3 py-1.5 text-sm">
+              <span className="text-slate-500 mr-1">Qty:</span>
+              <span className="font-semibold text-slate-800">{inputs.quantity.toLocaleString('en-IN')}</span>
             </div>
-            
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="bg-white border border-slate-200 rounded px-3 py-1.5 text-sm">
-                <span className="text-slate-500 mr-1">Qty:</span>
-                <span className="font-semibold text-slate-800">{inputs.quantity.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="bg-white border border-slate-200 rounded px-3 py-1.5 text-sm">
-                <span className="text-slate-500 mr-1">Board:</span>
-                <span className="font-semibold text-slate-800">{selectedBoard.name}</span>
-              </div>
-              <div className="bg-white border border-slate-200 rounded px-3 py-1.5 text-sm">
-                <span className="text-slate-500 mr-1">Per Box:</span>
-                <span className="font-semibold text-slate-800">₹{result.costBreakdown.sellingPricePerBox.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-sm text-blue-800">
-                <span className="opacity-75 mr-1">Selling Price:</span>
-                <span className="font-bold">₹{result.costBreakdown.sellingPrice.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
-              </div>
+            <div className="bg-white border border-slate-200 rounded px-3 py-1.5 text-sm">
+              <span className="text-slate-500 mr-1">Board:</span>
+              <span className="font-semibold text-slate-800">{selectedBoard.name}</span>
+            </div>
+            <div className="bg-white border border-slate-200 rounded px-3 py-1.5 text-sm">
+              <span className="text-slate-500 mr-1">Per Box:</span>
+              <span className="font-semibold text-slate-800">₹{result.costBreakdown.sellingPricePerBox.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</span>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded px-3 py-1.5 text-sm text-blue-800">
+              <span className="opacity-75 mr-1">Selling Price:</span>
+              <span className="font-bold">₹{result.costBreakdown.sellingPrice.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
             </div>
           </div>
-        </header>
+        </div>
+      </header>
 
+      <div className="max-w-[1600px] mx-auto px-4 py-8">
         <main className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <SectionCard
             title="Input Parameters"
