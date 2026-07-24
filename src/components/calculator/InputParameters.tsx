@@ -8,10 +8,10 @@ import { BOARD_TYPES } from '@/hooks/useBoxCalculator';
 interface Props {
   inputs: BoxInputs;
   selectedBoardId: string;
-  selectedSheetKey: 'large' | 'small';
+  selectedSheetKey: 'large' | 'small' | 'custom';
   onInputChange: <K extends keyof BoxInputs>(key: K, value: BoxInputs[K]) => void;
   onBoardChange: (id: string) => void;
-  onSheetChange: (key: 'large' | 'small') => void;
+  onSheetChange: (key: 'large' | 'small' | 'custom') => void;
 }
 
 export default function InputParameters({
@@ -58,20 +58,23 @@ export default function InputParameters({
                     }
                   `}
                 >
-                  <div>{bt.id}</div>
-                  <div className={`text-xs mt-0.5 ${selectedBoardId === bt.id ? 'text-blue-600' : 'text-slate-500'}`}>₹{bt.ratePerKg}/kg</div>
+                  <div className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{bt.name}</div>
                 </button>
               ))}
             </div>
           </div>
-          <InputField id="boardThickness" label="Board Thickness" value={inputs.boardThickness} unit="mm" step={0.1} onChange={(v) => onInputChange('boardThickness', v)} />
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <InputField id="boardThickness" label="Board Thickness" value={inputs.boardThickness} unit="mm" step={0.1} onChange={(v) => onInputChange('boardThickness', v)} />
+            <InputField id="boardRatePerKg" label="Board Rate" value={inputs.boardRatePerKg} unit="₹/kg" step={1} onChange={(v) => onInputChange('boardRatePerKg', v)} />
+          </div>
           
           <div className="flex flex-col gap-1.5 mt-2">
             <label className="text-sm font-medium text-slate-700">Sheet Size</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {[
                 { id: 'large' as const, name: 'Large', size: '31×41' },
                 { id: 'small' as const, name: 'Small', size: '25×36' },
+                { id: 'custom' as const, name: 'Custom', size: 'Input' },
               ].map((sheet) => (
                 <button
                   key={sheet.id}
@@ -89,6 +92,12 @@ export default function InputParameters({
                 </button>
               ))}
             </div>
+            {selectedSheetKey === 'custom' && (
+              <div className="grid grid-cols-2 gap-4 mt-2 p-3 bg-blue-50/50 rounded-lg border border-blue-100">
+                <InputField id="customSheetLength" label="Sheet Length" value={inputs.customSheetLength} unit="in" step={1} onChange={(v) => onInputChange('customSheetLength', v)} />
+                <InputField id="customSheetWidth" label="Sheet Width" value={inputs.customSheetWidth} unit="in" step={1} onChange={(v) => onInputChange('customSheetWidth', v)} />
+              </div>
+            )}
           </div>
         </div>
       </div>

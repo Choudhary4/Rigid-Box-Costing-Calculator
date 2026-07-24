@@ -92,7 +92,7 @@ export default function BoxCalculatorPage() {
             title="Material Masters"
             subtitle="Standard board rates, GSM data & sheet sizes"
           >
-            <MaterialMasters boardCosts={result.boardCosts} selectedBoard={selectedBoard} selectedSheetKey={selectedSheetKey} />
+            <MaterialMasters boardCosts={result.boardCosts} selectedBoard={selectedBoard} selectedSheetKey={selectedSheetKey} inputs={inputs} />
           </SectionCard>
 
           <SectionCard

@@ -17,9 +17,9 @@ import type {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const BOARD_TYPES: BoardType[] = [
-  { id: 'GG', name: 'Gray/Gray (GG)', gsmPerMm: 660, ratePerKg: 48 },
-  { id: 'GW', name: 'Gray/White (GW)', gsmPerMm: 680, ratePerKg: 55 },
-  { id: 'GB', name: 'Gray/Black (GB)', gsmPerMm: 690, ratePerKg: 60 },
+  { id: 'GG', name: 'Gray/Gray', gsmPerMm: 660, ratePerKg: 48 },
+  { id: 'GW', name: 'Gray/White', gsmPerMm: 680, ratePerKg: 55 },
+  { id: 'GB', name: 'Gray/Black', gsmPerMm: 690, ratePerKg: 60 },
 ];
 
 export const SHEET_SIZES = {
@@ -44,21 +44,37 @@ const DEFAULT_INPUTS: BoxInputs = {
   astarCostPerSheet: 20,
   marginOnCost: 30,
   marginOnSales: 23.08,
+  boardRatePerKg: 48,
+  customSheetLength: 30,
+  customSheetWidth: 40,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Round up to 1 decimal, but only if value >= 5
 // ─────────────────────────────────────────────────────────────────────────────
 function roundGatta(value: number): number {
-  if (value < 5) return parseFloat(value.toFixed(1));
-  return Math.ceil(value * 10) / 10;
+  if (value < 5) return value; // If less than 5, don't round off
+  return Math.ceil(value * 10) / 10; // If 5 or more, round up to 1 decimal
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Pieces per sheet (31x41) for both orientations
 // ─────────────────────────────────────────────────────────────────────────────
-function piecesPerSheet(pieceL: number, pieceW: number, sheetKey: 'large' | 'small'): number {
-  const { length: sheetL, width: sheetW } = SHEET_SIZES[sheetKey];
+function piecesPerSheet(pieceL: number, pieceW: number, sheetKey: 'large' | 'small' | 'custom', customL?: number, customW?: number): number {
+  let sheetL = 0, sheetW = 0;
+  if (sheetKey === 'custom') {
+    sheetL = customL || 0;
+    sheetW = customW || 0;
+  } else {
+    const s = SHEET_SIZES[sheetKey as 'large' | 'small'];
+    if (s) {
+      sheetL = s.length;
+      sheetW = s.width;
+    }
+  }
+  
+  if (sheetL === 0 || sheetW === 0) return 0;
+  
   const o1 = Math.floor(sheetL / pieceL) * Math.floor(sheetW / pieceW);
   const o2 = Math.floor(sheetL / pieceW) * Math.floor(sheetW / pieceL);
   return Math.max(o1, o2);
@@ -67,7 +83,7 @@ function piecesPerSheet(pieceL: number, pieceW: number, sheetKey: 'large' | 'sma
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Calculation
 // ─────────────────────────────────────────────────────────────────────────────
-function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'small'): CalculationResult {
+function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'small' | 'custom'): CalculationResult {
   const {
     boxLength,
     boxWidth,
@@ -75,7 +91,7 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
     lidHeight,
     boardThickness,
     quantity,
-    lidThicknessAllowance,
+    boardThicknessAllowance,
     cuttingAllowance,
     excessConsideration,
     totalLabourCost,
@@ -83,6 +99,7 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
     coverPaperCostPerSheet,
     astarCostPerSheet,
     marginOnCost,
+    boardRatePerKg,
   } = inputs;
 
   // ── Step 1: Board Cost ───────────────────────────────────────────────────
@@ -91,24 +108,26 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
   const { length: sL, width: sW } = SHEET_SIZES.small;
 
   const costPerLargeSheet =
-    ((totalGsm * lL * lW) / 1550 / 1000) * board.ratePerKg;
+    ((totalGsm * lL * lW) / 1550 / 1000) * boardRatePerKg;
   const costPerSmallSheet =
-    ((totalGsm * sL * sW) / 1550 / 1000) * board.ratePerKg;
+    ((totalGsm * sL * sW) / 1550 / 1000) * boardRatePerKg;
+  const costPerCustomSheet =
+    ((totalGsm * inputs.customSheetLength * inputs.customSheetWidth) / 1550 / 1000) * boardRatePerKg;
 
-  const boardCosts: BoardCosts = { totalGsm, costPerLargeSheet, costPerSmallSheet };
+  const boardCosts: BoardCosts = { totalGsm, costPerLargeSheet, costPerSmallSheet, costPerCustomSheet };
 
   // ── Step 2: Gatta Dimensions ─────────────────────────────────────────────
   const rawBaseL = boxLength + boxHeight + boxHeight + cuttingAllowance;
   const rawBaseW = boxWidth + boxHeight + boxHeight + cuttingAllowance;
   const rawLidL =
     boxLength +
-    lidThicknessAllowance +
+    boardThicknessAllowance +
     lidHeight +
     lidHeight +
     cuttingAllowance;
   const rawLidW =
     boxWidth +
-    lidThicknessAllowance +
+    boardThicknessAllowance +
     lidHeight +
     lidHeight +
     cuttingAllowance;
@@ -132,22 +151,30 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
   const basePiecesPerSheet = piecesPerSheet(
     gattaDimensions.baseLength,
     gattaDimensions.baseWidth,
-    sheetKey
+    sheetKey,
+    inputs.customSheetLength,
+    inputs.customSheetWidth
   );
   const lidPiecesPerSheet = piecesPerSheet(
     gattaDimensions.lidLength,
     gattaDimensions.lidWidth,
-    sheetKey
+    sheetKey,
+    inputs.customSheetLength,
+    inputs.customSheetWidth
   );
   const coverPiecesPerSheet = piecesPerSheet(
     coverDimensions.coverLength,
     coverDimensions.coverWidth,
-    sheetKey
+    sheetKey,
+    inputs.customSheetLength,
+    inputs.customSheetWidth
   );
   const astarPiecesPerSheet = piecesPerSheet(
     coverDimensions.astarLength,
     coverDimensions.astarWidth,
-    sheetKey
+    sheetKey,
+    inputs.customSheetLength,
+    inputs.customSheetWidth
   );
 
   const baseSheetsRequired = basePiecesPerSheet > 0 ? Math.ceil(quantity / basePiecesPerSheet) : 0;
@@ -167,7 +194,12 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
   };
 
   // ── Step 6: Final Costing ────────────────────────────────────────────────
-  const activeSheetCost = sheetKey === 'large' ? costPerLargeSheet : costPerSmallSheet;
+  const activeSheetCost =
+    sheetKey === 'large'
+      ? costPerLargeSheet
+      : sheetKey === 'small'
+      ? costPerSmallSheet
+      : costPerCustomSheet;
 
   const gattaBaseCost = baseSheetsRequired * activeSheetCost;
   const gattaLidCost = lidSheetsRequired * activeSheetCost;
@@ -211,7 +243,7 @@ function calculate(inputs: BoxInputs, board: BoardType, sheetKey: 'large' | 'sma
 export function useBoxCalculator() {
   const [inputs, setInputs] = useState<BoxInputs>(DEFAULT_INPUTS);
   const [selectedBoardId, setSelectedBoardId] = useState<string>('GG');
-  const [selectedSheetKey, setSelectedSheetKey] = useState<'large' | 'small'>('large');
+  const [selectedSheetKey, setSelectedSheetKey] = useState<'large' | 'small' | 'custom'>('large');
 
   const selectedBoard = useMemo(
     () => BOARD_TYPES.find((b) => b.id === selectedBoardId) ?? BOARD_TYPES[0],
@@ -241,11 +273,19 @@ export function useBoxCalculator() {
     });
   }
 
+  function handleBoardChange(id: string) {
+    setSelectedBoardId(id);
+    const board = BOARD_TYPES.find((b) => b.id === id);
+    if (board) {
+      updateInput('boardRatePerKg', board.ratePerKg);
+    }
+  }
+
   return {
     inputs,
     updateInput,
     selectedBoardId,
-    setSelectedBoardId,
+    setSelectedBoardId: handleBoardChange,
     selectedSheetKey,
     setSelectedSheetKey,
     selectedBoard,

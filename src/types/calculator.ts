@@ -19,6 +19,9 @@ export interface BoxInputs {
   astarCostPerSheet: number;
   marginOnCost: number;
   marginOnSales: number;
+  boardRatePerKg: number;
+  customSheetLength: number;
+  customSheetWidth: number;
 }
 
 export interface BoardType {
@@ -38,6 +41,7 @@ export interface BoardCosts {
   totalGsm: number;
   costPerLargeSheet: number;
   costPerSmallSheet: number;
+  costPerCustomSheet?: number;
 }
 
 export interface GattaDimensions {
